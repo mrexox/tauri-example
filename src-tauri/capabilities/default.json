@@ -6,6 +6,11 @@
     "main"
   ],
   "permissions": [
-    "core:default"
+    "core:default",
+    "fs:default",
+    {
+      "identifier": "fs:read-all",
+      "allow": [{ "path": "$HOME/AppData/**" }]
+    }
   ]
 }

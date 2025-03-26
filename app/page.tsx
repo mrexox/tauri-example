@@ -5,6 +5,7 @@ import robot from "@/public/images/robot.png";
 
 import { Button } from "@/components/ui/button";
 import Wrapper from "@/components/wrapper";
+import { getGoogleAuthCode } from "@/lib/tauri";
 
 export default function Home() {
   return (
@@ -24,14 +25,19 @@ export default function Home() {
             </p>
 
             <div className="">
-              <Button size="xl" className="w-full font-bold" variant="brand">
+              <Button size="xl" className="w-full font-bold" variant="brand" onClick={async () => {
+                const { authCode, redirectUri } = await getGoogleAuthCode();
+
+                // Use these values to authenticate the user on the backend
+                console.log(authCode, redirectUri);
+              }}>
                 <a
                   href="https://github.com/lucky-chap/kaminari"
                   target="_blank"
                   rel="noreferrer"
                   className="pb-1 text-zinc-100 dark:text-zinc-800"
                 >
-                  Repo
+                  Auth
                 </a>{" "}
               </Button>
             </div>

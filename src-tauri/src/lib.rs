@@ -1,12 +1,17 @@
 mod commands;
 mod sentry;
+mod sidecar;
 
-use log::info;
-use tauri::Manager;
+use tauri::plugin::TauriPlugin;
 use tauri::{generate_handler, webview::WebviewWindowBuilder, App};
+use tauri::{Manager, Runtime};
 
 #[macro_use]
 extern crate dotenvy_macro;
+
+pub(crate) struct AppState {
+    sidecar_client: sidecar::Client,
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -15,31 +20,32 @@ pub fn run() {
     // Initialize with plugins
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_sentry::init_with_no_injection(&sentry_client));
 
     // Setup
     builder = builder.setup(|app| {
         create_main_window(app)?;
         if cfg!(debug_assertions) {
-            app.handle().plugin(
-                tauri_plugin_log::Builder::default()
-                    .level(log::LevelFilter::Info)
-                    .build(),
-            )?;
+            app.handle().plugin(build_log_plugin())?;
         }
 
         let app_handle_copy = app.handle().clone();
         tauri::async_runtime::spawn(async move {
-            let app_handle = &app_handle_copy;
-            app_handle.manage(2);
+            let port = sidecar::spawn(&app_handle_copy).await;
+            let sidecar_client = sidecar::connect(port).await;
+
+            app_handle_copy.manage(AppState { sidecar_client });
         });
-        info!("Hello from the setup hook");
 
         Ok(())
     });
 
     // Register commands
-    builder = builder.invoke_handler(generate_handler![commands::google_auth_code]);
+    builder = builder.invoke_handler(generate_handler![
+        commands::google_auth_code,
+        commands::sidecar_send
+    ]);
 
     // Run the app
     builder
@@ -58,4 +64,10 @@ fn create_main_window(app: &mut App) -> tauri::Result<()> {
         .build()?;
 
     Ok(())
+}
+
+fn build_log_plugin<R: Runtime>() -> TauriPlugin<R> {
+    tauri_plugin_log::Builder::default()
+        .level(log::LevelFilter::Info)
+        .build()
 }

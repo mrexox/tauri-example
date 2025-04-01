@@ -30,11 +30,10 @@ func main() {
 
 	defer listener.Close()
 	addr := listener.Addr().String()
-	slog.Info("start server at " + addr)
 
 	fmt.Println(addr[strings.LastIndex(addr, ":")+1:])
 
-	slog.Info("waiting for connection")
+	slog.Info("start server at " + addr)
 	done := make(chan struct{})
 	go func() {
 		conn, err := listener.Accept()

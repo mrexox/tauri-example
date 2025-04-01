@@ -68,3 +68,16 @@ pub(crate) async fn google_auth_code(app: AppHandle) -> Result<(String, String),
 
     Ok((res, CALLBACK_URL.to_string()))
 }
+
+use log::debug;
+
+#[tauri::command]
+pub(crate) async fn sidecar_send(
+    state: tauri::State<'_, crate::AppState>,
+    message: String,
+) -> Result<(), String> {
+    debug!("sending message: {}", &message);
+    state.sidecar_client.write(message).await;
+
+    Ok(())
+}

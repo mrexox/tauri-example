@@ -1,11 +1,21 @@
 mod commands;
+mod sentry;
 
+use log::info;
+use tauri::Manager;
 use tauri::{generate_handler, webview::WebviewWindowBuilder, App};
+
+#[macro_use]
+extern crate dotenvy_macro;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let sentry_client = sentry::setup();
+
     // Initialize with plugins
-    let mut builder = tauri::Builder::default().plugin(tauri_plugin_fs::init());
+    let mut builder = tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_sentry::init_with_no_injection(&sentry_client));
 
     // Setup
     builder = builder.setup(|app| {
@@ -17,6 +27,14 @@ pub fn run() {
                     .build(),
             )?;
         }
+
+        let app_handle_copy = app.handle().clone();
+        tauri::async_runtime::spawn(async move {
+            let app_handle = &app_handle_copy;
+            app_handle.manage(2);
+        });
+        info!("Hello from the setup hook");
+
         Ok(())
     });
 

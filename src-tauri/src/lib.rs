@@ -43,8 +43,8 @@ pub fn run() {
 
     // Register commands
     builder = builder.invoke_handler(generate_handler![
+        commands::sidecar_send,
         commands::google_auth_code,
-        commands::sidecar_send
     ]);
 
     // Run the app
@@ -68,6 +68,6 @@ fn create_main_window(app: &mut App) -> tauri::Result<()> {
 
 fn build_log_plugin<R: Runtime>() -> TauriPlugin<R> {
     tauri_plugin_log::Builder::default()
-        .level(log::LevelFilter::Info)
+        .level(log::LevelFilter::Debug)
         .build()
 }

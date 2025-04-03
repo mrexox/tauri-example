@@ -4,5 +4,5 @@
 fn main() {
     dotenvy::dotenv().ok();
 
-    app_lib::run();
+    tauri_example::run();
 }

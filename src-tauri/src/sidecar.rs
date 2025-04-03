@@ -1,4 +1,4 @@
-use log::info;
+use log::{debug, info};
 
 use tauri::AppHandle;
 use tauri_plugin_shell::process::CommandEvent;
@@ -19,7 +19,7 @@ impl Client {
         self.writer
             .lock()
             .await
-            .write_all(s.as_bytes())
+            .write_all((s + "\n").as_bytes()) // "\n" is the messages divider
             .await
             .expect("can't write data to TCP socket");
     }
@@ -36,16 +36,19 @@ pub(crate) async fn spawn(app_handle: &AppHandle) -> u32 {
     let (mut rx, mut _child) = command.spawn().expect("failed to spawn sidecar");
 
     tauri::async_runtime::spawn(async move {
+        let mut port_parsed = false;
         while let Some(event) = rx.recv().await {
             match event {
                 // Receive only port number from STDOUT
                 CommandEvent::Stdout(bytes) => {
-                    if !port_tx.is_closed() {
+                    if !port_tx.is_closed() && !port_parsed {
                         if let Ok(port) = String::from_utf8_lossy(&bytes).trim().parse() {
                             port_tx.send(port).expect("unable to send port");
+                            port_parsed = true;
                             continue;
                         }
                     }
+                    debug!("{}", String::from_utf8_lossy(&bytes).trim());
                 }
                 _ => {}
             }

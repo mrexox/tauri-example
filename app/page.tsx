@@ -5,7 +5,7 @@ import robot from "@/public/images/robot.png";
 
 import { Button } from "@/components/ui/button";
 import Wrapper from "@/components/wrapper";
-import { getGoogleAuthCode } from "@/lib/tauri";
+import { getGoogleAuthCode, sidecarSend } from "@/lib/tauri";
 
 export default function Home() {
   return (
@@ -41,6 +41,11 @@ export default function Home() {
                 </a>{" "}
               </Button>
             </div>
+            <Button onClick={async () => {
+              await sidecarSend('log', { message: 'Hello from the web!' });
+            }}>
+              Send hello to sidecar
+            </Button>
           </div>
         </Wrapper>
       </section>

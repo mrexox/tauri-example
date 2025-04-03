@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"os"
 	"strings"
 )
 
@@ -18,6 +19,8 @@ type Message struct {
 }
 
 func main() {
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -83,6 +86,7 @@ func handleConnection(ctx context.Context, conn net.Conn) {
 			sem <- struct{}{}
 			go func() {
 				// handle(ctx, message)
+				slog.Info("new message", "event", message.Event, "data", string(message.Data))
 				<-sem
 			}()
 		}

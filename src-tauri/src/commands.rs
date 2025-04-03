@@ -1,3 +1,4 @@
+use log::debug;
 use url::Url;
 
 use std::collections::HashMap;
@@ -9,6 +10,17 @@ use dotenvy_macro::dotenv;
 
 const CLIENT_ID: &str = dotenv!("GOOGLE_DESKTOP_OAUTH_CLIENT_ID");
 const CALLBACK_URL: &str = "http://localhost/callback";
+
+#[tauri::command]
+pub(crate) async fn sidecar_send(
+    state: tauri::State<'_, crate::AppState>,
+    message: String,
+) -> Result<(), String> {
+    debug!("sending message: {}", &message);
+    state.sidecar_client.write(message).await;
+
+    Ok(())
+}
 
 #[tauri::command]
 pub(crate) async fn google_auth_code(app: AppHandle) -> Result<(String, String), String> {
@@ -67,17 +79,4 @@ pub(crate) async fn google_auth_code(app: AppHandle) -> Result<(String, String),
     let _ = auth_window.close();
 
     Ok((res, CALLBACK_URL.to_string()))
-}
-
-use log::debug;
-
-#[tauri::command]
-pub(crate) async fn sidecar_send(
-    state: tauri::State<'_, crate::AppState>,
-    message: String,
-) -> Result<(), String> {
-    debug!("sending message: {}", &message);
-    state.sidecar_client.write(message).await;
-
-    Ok(())
 }

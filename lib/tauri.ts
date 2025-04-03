@@ -30,3 +30,20 @@ export async function getGoogleAuthCode(): Promise<GoogleAuthOptions | Record<st
 
   return { authCode, redirectUri }
 }
+
+export async function sidecarSend(event: string, data: any): Promise<void> {
+  if (!isTauri) return
+
+  const { invoke } = window.__TAURI__.core
+
+  // Build a message
+  // {
+  //   event: 'event_name',
+  //   data: any JSON data
+  // }
+  const message = JSON.stringify({ event, data })
+
+  console.log('sending message')
+  await invoke('sidecar_send', { message })
+}
+

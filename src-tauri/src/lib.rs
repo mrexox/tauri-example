@@ -1,7 +1,9 @@
+pub mod atomic_once_cell;
 mod commands;
 mod sentry;
 mod sidecar;
 
+use atomic_once_cell::AtomicOnceCell;
 use tauri::plugin::TauriPlugin;
 use tauri::{generate_handler, webview::WebviewWindowBuilder, App};
 use tauri::{Manager, Runtime};
@@ -10,7 +12,7 @@ use tauri::{Manager, Runtime};
 extern crate dotenvy_macro;
 
 pub(crate) struct AppState {
-    sidecar_client: sidecar::Client,
+    sidecar_client: AtomicOnceCell<sidecar::Client>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -31,11 +33,18 @@ pub fn run() {
         }
 
         let app_handle_copy = app.handle().clone();
+
+        let client_cell = AtomicOnceCell::new();
+        app_handle_copy.manage(AppState {
+            sidecar_client: client_cell.clone(),
+        });
+
         tauri::async_runtime::spawn(async move {
             let port = sidecar::spawn(&app_handle_copy).await;
             let sidecar_client = sidecar::connect(port).await;
-
-            app_handle_copy.manage(AppState { sidecar_client });
+            client_cell
+                .init(sidecar_client)
+                .expect("failed to init sidecar client");
         });
 
         Ok(())

@@ -17,7 +17,7 @@ pub(crate) async fn sidecar_send(
     message: String,
 ) -> Result<(), String> {
     debug!("sending message: {}", &message);
-    state.sidecar_client.write(message).await;
+    state.sidecar_client.get().await.write(message).await;
 
     Ok(())
 }

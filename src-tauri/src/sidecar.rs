@@ -10,6 +10,7 @@ use tokio::net::TcpStream;
 use tokio::sync::mpsc::unbounded_channel;
 use tokio::sync::Mutex;
 
+#[derive(Debug)]
 pub(crate) struct Client {
     writer: Arc<Mutex<WriteHalf<TcpStream>>>,
 }
